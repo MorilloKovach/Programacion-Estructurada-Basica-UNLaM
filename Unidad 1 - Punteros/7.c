@@ -8,6 +8,11 @@ int main()
     printf("\nIngrese la cantidad de numeros: ");
     scanf("%d",&N);
     v = calloc(N, sizeof(int));
+    if(v == NULL)
+    {
+        printf("\nError en la asignacion de memoria.");
+        exit(1);
+    }
     ptr = v;
     for(i=0;i<N;i++)
     {

@@ -1,17 +1,16 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
-#include<peb.h>
 #define TAM 10
 
 int* encontrar(int*, int);
 
 int main()
 {
-    srand(time(NULL));
     int v[TAM];
     int *p = v;
     int i;
+    srand(time(NULL));
     for(i=0;i<TAM;i++)
     {
         *p = rand()%1000;

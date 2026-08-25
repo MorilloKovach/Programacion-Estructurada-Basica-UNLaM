@@ -9,22 +9,22 @@ Desde el main invocar la función 5 veces para visualizar 5 vectores distintos.
 #include <time.h>
 #define TAM 10
 
-void crearVector();
-void ordenarVector(int *);
-void mostrarVector(int *);
-
+void crearVector(int);
+void ordenarVector(int *, int);
+void mostrarVector(int *, int);
+int posMinimo(int *, int, int);
 int main()
 {
     int i;
     srand(time(NULL));
     for (i = 0; i < 5; i++)
     {
-        crearVector();
+        crearVector(TAM);
     }
 }
-void crearVector()
+void crearVector(int tam)
 {
-    int *v = calloc(TAM, sizeof(int)), *ptr;
+    int *v = calloc(tam, sizeof(int)), *ptr;
     if (v == NULL)
     {
         printf("\nError en la asignacion de memoria.");
@@ -32,47 +32,49 @@ void crearVector()
     }
     int i;
     ptr = v;
-    for (i = 0; i < TAM; i++)
+    for (i = 0; i < tam; i++)
     {
         *ptr = rand() % 90 + 10;
         ptr++;
     }
-    ordenarVector(v);
-    mostrarVector(v);
+    ordenarVector(v, TAM);
+    mostrarVector(v, TAM);
     free(v);
 }
 
-void ordenarVector(int *v)
+int posMinimo(int *v, int ini, int tam)
 {
-    int *ptr1 = v, *ptr2;
-    int i, j, aux, *ptr3;
-    for (i = 0; i < TAM; i++)
+    int i, posMin = ini;
+    for (i = ini + 1; i < tam; i++)
     {
-        ptr2 = v + i + 1;
-        ptr3 = ptr1;
-        for (j = i + 1; j < TAM; j++)
+        if (*(v + i) > *(v + posMin))
         {
-            if (*ptr3 < *ptr2)
-            {
-                ptr3 = ptr2;
-            }
-            ptr2++;
+            posMin = i;
         }
-        if (ptr3 != ptr1)
+    }
+    return posMin;
+}
+
+void ordenarVector(int *v, int tam)
+{
+    int i, j, aux;
+    for (i = 0; i < tam; i++)
+    {
+        j = posMinimo(v, i, tam);
+        if (i != j)
         {
-            aux = *ptr3;
-            *ptr3 = *ptr1;
-            *ptr1 = aux;
+            aux = *(v+i);
+            *(v+i) = *(v + j);
+            *(v + j) = aux;
         }
-        ptr1++;
     }
 }
 
-void mostrarVector(int *v)
+void mostrarVector(int *v, int tam)
 {
     int i, *ptr;
     ptr = v;
-    for (i = 0; i < TAM; i++)
+    for (i = 0; i < tam; i++)
     {
         printf("%d ", *ptr);
         ptr++;

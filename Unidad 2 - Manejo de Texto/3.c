@@ -2,7 +2,6 @@
 #include <string.h>
 int cargaAlumnos(char[][20], int *, int);
 int *Buscar(char[][20], int *, char *, int);
-void leer(char[], int);
 void ordenar(char[][20], int[], int);
 void mostrar(char[][20], int[], int);
 int main()
@@ -62,23 +61,6 @@ int cargaAlumnos(char AlumnosNombres[][20], int *DNISAlumnos, int tam)
         i++;
     }
     return i;
-}
-
-void leer(char nombre[], int largo)
-{
-    int i;
-    getchar();
-    fgets(nombre, largo, stdin);
-    i = 0;
-    while (nombre[i] != '\0')
-    {
-        if (nombre[i] == '\n')
-        {
-            nombre[i] = '\0';
-        }
-        else
-            i++;
-    }
 }
 
 void ordenar(char nombres[][20], int dnis[], int tam)

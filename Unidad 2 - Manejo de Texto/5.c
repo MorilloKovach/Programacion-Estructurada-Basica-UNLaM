@@ -34,6 +34,10 @@ int main()
     float dolar, *costo_alquiler, tot = 0;
     diasAlquiler = calloc(TAM, sizeof(int));
     costo_alquiler = calloc(TAM, sizeof(float));
+    if(diasAlquiler == NULL || costo_alquiler == NULL)
+    {
+        printf("\nError. No se pudo asignar memoria. \n");
+    }
     do
     {
         printf("\nIngrese el dia: ");
@@ -45,22 +49,34 @@ int main()
     } while (!fecha(dia, mes, anio));
     printf("\nIngrese la cotizacion del dolar: ");
     scanf("%f", &dolar);
-    tam = cargaDatos(cod, diasAlquiler, costo_alquiler, TAM);
-    int dAux, mAux, aAux;
-    printf("\nEl porcentaje de los vehiculos alquilados fue %.2f\n", porcentaje(tam, TAM));
-    printf("\nALQUILER DE AUTOS DEL DÍA: %d-%d-%d COTIZACION DEL DÓLAR: $ %.2f\n", dia, mes, anio, dolar);
-    printf("\nNRO. DE AUTO\tDIAS DE ALQUILER\tPRECIO DE ALQUILER EN PESOS POR DIA\t FECHA DE DEVOLUCION\n");
-    for (i = 0; i < tam; i++)
+    while(dolar < 0)
     {
-        dAux = dia;
-        mAux = mes;
-        aAux = anio;
-        tot += *(costo_alquiler + i) * *(diasAlquiler + i);
-        MoverFecha(&dAux, &mAux, &aAux, *(diasAlquiler + i));
-        printf("\n%s \t %d \t %.2f \t %d/%d/%d", cod[i], *(diasAlquiler + i), *(costo_alquiler + i) * dolar, dAux, mAux, aAux);
+        printf("\nIngrese una conversion valida: ");
+        scanf("%f",&dolar);
     }
-    printf("\nEl total en dolares es: $ %.2f", tot);
-    printf("\nEl total en pesos es $ %.2f", tot * dolar);
+    tam = cargaDatos(cod, diasAlquiler, costo_alquiler, TAM);
+    if (tam == 0)
+    {
+        int dAux, mAux, aAux;
+        printf("\nEl porcentaje de los vehiculos alquilados fue %.2f\n", porcentaje(tam, TAM));
+        printf("\nALQUILER DE AUTOS DEL DÍA: %d-%d-%d COTIZACION DEL DÓLAR: $ %.2f\n", dia, mes, anio, dolar);
+        printf("\nNRO. DE AUTO\tDIAS DE ALQUILER\tPRECIO DE ALQUILER EN PESOS POR DIA\t FECHA DE DEVOLUCION\n");
+        for (i = 0; i < tam; i++)
+        {
+            dAux = dia;
+            mAux = mes;
+            aAux = anio;
+            tot += *(costo_alquiler + i) * *(diasAlquiler + i);
+            MoverFecha(&dAux, &mAux, &aAux, *(diasAlquiler + i));
+            printf("\n%s \t %d \t %.2f \t %d/%d/%d", cod[i], *(diasAlquiler + i), *(costo_alquiler + i) * dolar, dAux, mAux, aAux);
+        }
+        printf("\nEl total en dolares es: $ %.2f", tot);
+        printf("\nEl total en pesos es $ %.2f", tot * dolar);
+    }
+    else
+    {
+        printf("\nNO HAY CARGA");
+    }
     free(costo_alquiler);
     free(diasAlquiler);
     return 0;
@@ -124,7 +140,7 @@ char *cargaCodigo(int car)
     {
         printf("\nIngrese el codigo del auto: ");
         scanf("%s", cod);
-    } while (strlen(cod) != car-1);
+    } while (strlen(cod) != car - 1);
     return cod;
 }
 void MoverFecha(int *d, int *m, int *a, int dias)
@@ -146,8 +162,9 @@ void MoverFecha(int *d, int *m, int *a, int dias)
                 {
                     dia++;
                 }
-                else{
-                    if(dia==29)
+                else
+                {
+                    if (dia == 29)
                     {
                         mes++;
                         dia = 1;

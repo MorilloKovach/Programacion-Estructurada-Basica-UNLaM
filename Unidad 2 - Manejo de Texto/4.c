@@ -18,24 +18,39 @@ b. Mostrar el listado de productos con su precio ordenado en forma alfabética p
 int CargarProductos(char[][ALPHA], int *, int);
 void CargarVentas(char[][ALPHA], int *, int);
 int Buscar(char[][ALPHA], char[], int);
-void Recaudacion(char[][ALPHA], int*, int*, int);
-void Ordenar(char[][ALPHA], int*, int*, int);
-void Mostrar(char[][ALPHA], int*, int*, int);
+int Recaudacion(char[][ALPHA], int *, int *, char[], int);
+void Ordenar(char[][ALPHA], int *, int *, int);
+void Mostrar(char[][ALPHA], int *, int *, int);
 char *LeerValidarCodigo();
 int LeerValidarEntero();
 
 int main()
 {
-    char codigosProductos[TAM][ALPHA];
-    int *ventas, *precios, tam,i;
+    char codigosProductos[TAM][ALPHA], codigo[ALPHA];
+    int *ventas, *precios, codigo, tam, tot;
     ventas = calloc(TAM, sizeof(int));
     precios = calloc(TAM, sizeof(int));
     tam = CargarProductos(codigosProductos, precios, TAM);
-    printf("\nEMPECEMOS A CARGAR LAS VENTAS\n");
-    CargarVentas(codigosProductos, ventas, tam);
-    Recaudacion(codigosProductos, precios, ventas, tam);
-    Ordenar(codigosProductos, precios, ventas, tam);
-    Mostrar(codigosProductos, precios, ventas, tam);
+    if (tam > 0)
+    {
+        printf("\nEMPECEMOS A CARGAR LAS VENTAS\n");
+        CargarVentas(codigosProductos, ventas, tam);
+        tot = Recaudacion(codigosProductos, precios, ventas, codigo, tam);
+        if (tot > 0)
+        {
+            printf("\nEl total de la recaudacion es de %d y el codigo con menos recaudacion es %s\n", tot, codigo);
+            Ordenar(codigosProductos, precios, ventas, tam);
+            Mostrar(codigosProductos, precios, ventas, tam);
+        }
+        else
+        {
+            printf("\nNo hubo recaudacion.");
+        }
+    }
+    else
+    {
+        printf("\nNo hubo carga de productos. Fin del programa.");
+    }
     free(ventas);
     free(precios);
     return 0;
@@ -45,21 +60,31 @@ void CargarVentas(char productos[][ALPHA], int *ventas, int tam)
 {
     char *prod;
     int cant_ventas, idx;
-    do
+    printf("\nIngrese el codigo del producto: ");
+    prod = LeerValidarCodigo();
+    idx = Buscar(productos, prod, tam);
+    while (idx == -1)
     {
+        printf("\nError. No es un codigo valido. Ingrese otro: ");
         prod = LeerValidarCodigo();
         idx = Buscar(productos, prod, tam);
-    } while (idx == -1);
+    }
+    printf("\nIngrese la cantidad de venta del producto: ");
     cant_ventas = LeerValidarEntero();
     while (cant_ventas != 0)
     {
         free(prod);
         ventas[idx] += cant_ventas;
-        do
+        printf("\nIngrese el codigo del producto: ");
+        prod = LeerValidarCodigo();
+        idx = Buscar(productos, prod, tam);
+        while (idx == -1)
         {
+            printf("\nError. No es un codigo valido. Ingrese otro: ");
             prod = LeerValidarCodigo();
             idx = Buscar(productos, prod, tam);
-        } while (idx == -1);
+        }
+        printf("\nIngrese la cantidad de venta del producto: ");
         cant_ventas = LeerValidarEntero();
     }
 }
@@ -69,7 +94,6 @@ int CargarProductos(char productos[][ALPHA], int *precios, int tam)
     int i = 0;
     char *prod;
     prod = LeerValidarCodigo();
-    printf("%s",prod);
     while (strcmp(prod, "FIN") != 0 && i < tam)
     {
         precios[i] = LeerValidarEntero();
@@ -110,62 +134,63 @@ char *LeerValidarCodigo()
 {
     char *cod;
     cod = calloc(ALPHA, sizeof(char));
-    do
+    printf("\nIngrese el codigo del producto: ");
+    scanf("%s", cod);
+    while (strlen(cod) != 3)
     {
-        printf("\nIngrese el codigo del producto: ");
+        printf("\nERROR. INGRESE UN CODIGO DE 3 CARACTERES: ");
         scanf("%s", cod);
-    } while (strlen(cod) != 3);
+    }
     return cod;
 }
-void Ordenar(char productos[][ALPHA], int *precios, int* ventas, int tam)
+void Ordenar(char productos[][ALPHA], int *precios, int *ventas, int tam)
 {
     int i, j, auxInt;
     char *cod;
     cod = calloc(ALPHA, sizeof(char));
-    for(i=0;i<tam-1;i++)
+    for (i = 0; i < tam - 1; i++)
     {
-        for(j=0;j<tam-i-1; j++)
+        for (j = 0; j < tam - i - 1; j++)
         {
-            if(strcmp(productos[j], productos[j+1]) > 0)
+            if (strcmp(productos[j], productos[j + 1]) > 0)
             {
                 strcpy(cod, productos[j]);
-                strcpy(productos[j], productos[j+1]);
-                strcpy(productos[j+1], cod);
+                strcpy(productos[j], productos[j + 1]);
+                strcpy(productos[j + 1], cod);
 
-                auxInt = *(precios+j);
-                *(precios+j) = *(precios+j+1);
-                *(precios+j+1) = auxInt;
+                auxInt = *(precios + j);
+                *(precios + j) = *(precios + j + 1);
+                *(precios + j + 1) = auxInt;
 
-                auxInt = *(ventas+j);
-                *(ventas+j) = *(ventas+j+1);
-                *(ventas+j+1) = auxInt;
+                auxInt = *(ventas + j);
+                *(ventas + j) = *(ventas + j + 1);
+                *(ventas + j + 1) = auxInt;
             }
         }
     }
 }
 
-void Recaudacion(char productos[][ALPHA], int *precios, int *ventas, int tam)
+int Recaudacion(char productos[][ALPHA], int *precios, int *ventas, char cod[], int tam)
 {
-    int i, min, flag=0,tot=0;
-    char *cod;
-    cod = calloc(ALPHA, sizeof(char));
-    for(i=0; i<tam; i++)
+    int i, min, flag = 0, tot = 0;
+    for (i = 0; i < tam; i++)
     {
-        if(*(ventas+i)>0 && (!flag || min > *(ventas+i))){
-            min = *(ventas+i);
+        if (*(ventas + i) > 0 && (!flag || min > *(ventas + i)))
+        {
+            min = *(ventas + i);
             strcpy(cod, productos[i]);
             flag = 1;
         }
-        tot+=*(ventas+i) * *(precios+i);
+        tot += *(ventas + i) * *(precios + i);
     }
-    printf("\nEl total vendido es %d y el codigo con menos ventas es %s\n",tot,cod);
+    return tot;
 }
 
-void Mostrar(char productos[][ALPHA], int* precios, int* ventas, int tam)
+void Mostrar(char productos[][ALPHA], int *precios, int *ventas, int tam)
 {
     int i;
-    for(i=0;i<tam; i++)
+    for (i = 0; i < tam; i++)
     {
-        printf("\n%s vendio %d unidades y en total recaudo %d\n", productos[i], *(ventas+i), *(precios+i) * *(ventas+i));
+        printf("\n%s vendio %d unidades y en total recaudo %d\n", productos[i], *(ventas + i), *(precios + i) * *(ventas + i));
     }
 }

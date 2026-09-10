@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define TAM 50
-#define V 20
+#define TAM 51
+#define V 2
 
 void cargarDatos(char[][TAM], int);
 char *LeerTexto();
@@ -13,9 +13,10 @@ int main()
     char nombres[V][TAM], nombre[TAM], *aux;
     int tam = V;
     cargarDatos(nombres, tam);
-    aux = calloc(TAM, sizeof(char));
+    printf("\nIngrese el nombre que quiere buscar: ");
     aux = LeerTexto();
     strcpy(nombre, aux);
+    printf("\nLa cantidad de coincidencias con el nombre %s es: ", nombre);
     printf("%d\n", contarCantidad(nombres, nombre, tam));
     free(aux);
     return 0;
@@ -31,6 +32,7 @@ void cargarDatos(char nombres[][TAM], int tam)
         printf("\nIngrese el apellido y nombre: ");
         aux = LeerTexto();
         strcpy(nombres[i], aux);
+        free(aux);
     }
 }
 
@@ -52,6 +54,7 @@ int contarCantidad(char nombres[][TAM], char nombre[], int tam)
             i++;
         }
         flag = 0;
+        //SEGUNDO RECORRIDO INTERNO, SOLO BUSCO NOMBRES
         while (i < strlen(nombres[j]) && flag == 0)
         {
             if (nombres[j][i] == ' ' || nombres[j][i] == '\n')

@@ -1,0 +1,11 @@
+Una estación de bomberos está a cargo de apagar los fuegos en la ciudad de Morón. Se tiene la estructura CasasPrendidasFuego, donde se carga la localidad (una cadena de 50 caracteres como maximo), la dirección (una cadena de 50 caracteres como maximo y debe incluir 4 digitos al final de la cadena) y la prioridad (un entero de 1 a 10). 
+
+Los llamados de urgencia van llegando por numero de llamado y se desconoce cuantos llamados pueden ser. 
+
+Dado a que los llamados llegan todos uno tras otro, es imposible preparar una misión organizada llamado tras llamado
+
+El equipo de bomberos te solicita que, tras terminar la carga de casas prendidas fuego (terminando con la dirección MORON) 
+
+1.- Muestres las casas prendidas fuego más importantes según su orden de prioridad, así el equipo de bomberos puede dirigirse lo antes posible
+
+2.- Si existen casas repetidas en una misma localidad, entonces realizar un ordenamiento por la cantidad de casas que existan por cada municipio y mostrar el listado

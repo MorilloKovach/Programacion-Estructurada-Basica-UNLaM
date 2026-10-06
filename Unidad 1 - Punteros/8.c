@@ -5,31 +5,26 @@ int IngrDatos();
 void mostrarV(int *, int);
 int main()
 {
-    int *v = NULL, *ptr, *tmp, N = 0, dni;
-    ptr = v;
+    int *v = NULL, N = 0, dni;
     dni = IngrDatos();
     while (dni != 0)
     {
         if (N % 5 == 0)
         {
-            tmp = (int *)realloc(v, (N + 5) * sizeof(int));
-            if(tmp==NULL)
+            v = realloc(v, (N + 5) * sizeof(int));
+            if(v==NULL)
             {
                 printf("\nError en la asignacion de memoria!");
                 free(v);
                 exit(1);
             }
-            v = tmp;
-            ptr = v + N;
         }
-        *ptr = dni;
-        ptr++;
+        *(v+N) = dni;
         N++;
         dni = IngrDatos();
     };
     printf("\nLa cantidad de dnis existentes es: %d\n", N);
-    ptr = v;
-    mostrarV(ptr, N);
+    mostrarV(v, N);
     free(v);
     return 0;
 }
@@ -49,7 +44,6 @@ void mostrarV(int *ptr, int N)
     int i;
     for (i = 0; i < N; i++)
     {
-        printf("%d ", *ptr);
-        ptr++;
+        printf("%d ", *(ptr+i));
     }
 }

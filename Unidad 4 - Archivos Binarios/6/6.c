@@ -1,3 +1,11 @@
+/*
+Dado el archivo productos.dat con la siguiente estructura:
+• Código (entero)
+• Precio (float)
+• Descripción (de hasta 50 caracteres)
+Realizar un programa que permita eliminar productos dado su código 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,72 +14,146 @@ typedef struct
     int codigo;
     float precio;
     char descripcion[51];
-} PRECIOS;
-
-int LecturaYEscritura(FILE *, FILE *, PRECIOS *, int);
+} PRODUCTOS;
+int LeerYValidarCodigo();
+int BuscarEnArchivo(FILE *, PRODUCTOS *, int);
+int BuscarEnMemoria(PRODUCTOS *, int, int);
+PRODUCTOS *QuitarCodigos(FILE *, int *);
+void AgregarEnAux(FILE *, FILE *, PRODUCTOS *, int);
 
 int main()
 {
-    FILE *fp;
-    FILE *fpMod;
-    PRECIOS p;
-    int cod;
-    int band = 0;
-    printf("\nIngrese el codigo: ");
-    scanf("%d", &cod);
-    while (cod != 0)
+    FILE *fp = fopen("PRODUCTOS.dat", "rb");
+    FILE *fpMod = fopen("PRODUCTOS-aux.dat", "wb");
+    PRODUCTOS *vP;
+    int tam = 0;
+    if (fpMod == NULL || fp == NULL)
     {
-        fpMod = fopen("PRECIOS-aux.dat", "w+b");
-        fp = fopen("PRECIOS.dat", "r+b");
-        if (fpMod == NULL || fp == NULL)
-        {
-            printf("\nNO SE PUEDEN ABRIR LOS ARCHIVOS");
-            exit(1);
-        }
-        band = LecturaYEscritura(fp, fpMod, &p, cod);
-        fclose(fpMod);
+        printf("\nNO SE PUEDEN ABRIR LOS ARCHIVOS");
+        exit(1);
+    }
+    vP = QuitarCodigos(fp, &tam);
+    if (tam > 0)
+    {
+        AgregarEnAux(fp, fpMod, vP, tam);
+        printf("\n...Eliminando registros...");
         fclose(fp);
-        if (band == 1)
-        {
-            remove("PRECIOS.dat");
-            rename("PRECIOS-aux.dat", "PRECIOS.dat");
-            printf("\nProducto eliminado con exito.");
-        }
-        else
-        {
-            remove("PRECIOS-aux.dat");
-            printf("\nError: El producto no existia en el archivo.");
-        }
-        printf("\nIngrese codigo: ");
-        scanf("%d", &cod);
+        fclose(fpMod);
+        remove("PRODUCTOS.dat");
+        rename("PRODUCTOS-aux.dat", "PRODUCTOS.dat");
+        free(vP);
+        printf("\nLimpieza de archivos hecha con exito.");
     }
-    fp = fopen("PRECIOS.dat", "r+b");
-    fread(&p, sizeof(PRECIOS), 1, fp);
-    while (!feof(fp))
+    else
     {
-        printf("\n%d %.2f\n", p.codigo, p.precio);
-        fread(&p, sizeof(PRECIOS), 1, fp);
+        printf("\nNo se hace nada, no se borro ningun registro.");
+        fclose(fp);
+        fclose(fpMod);
+        remove("PRODUCTOS-aux.dat");
+        free(vP);
     }
-    fclose(fp);
     return 0;
 }
 
-int LecturaYEscritura(FILE *fp, FILE *fpMod, PRECIOS *p, int cod)
+PRODUCTOS *QuitarCodigos(FILE *fp, int *tam)
 {
-    int band = 0;
-    fseek(fp, 0, SEEK_SET);
-    fread(p, sizeof(PRECIOS), 1, fp);
-    while (!feof(fp))
+    PRODUCTOS *auxP, *vP;
+    PRODUCTOS p;
+    int cod, band, i = *tam;
+    vP = NULL;
+    cod = LeerYValidarCodigo();
+    while (cod != 0)
     {
-        if ((p)->codigo != cod)
+        band = BuscarEnArchivo(fp, &p, cod); // Busco en la lista de PRODUCTOS.dat
+        if (band)
         {
-            fwrite(p, sizeof(PRECIOS), 1, fpMod);
+            if (BuscarEnMemoria(vP, i, cod)) // Busco en la lista de PRODUCTOS-aux los que fui borrando
+            {
+                printf("\nEse codigo ya esta guardado...");
+            }
+            else
+            {
+                auxP = (PRODUCTOS *)realloc(vP, (i + 1) * sizeof(PRODUCTOS));
+                if (auxP == NULL)
+                {
+                    printf("\nNo se pudo asignar memoria");
+                    exit(1);
+                }
+                else
+                {
+                    printf("\nTomado con exito.");
+                    vP = auxP;
+                    *(vP + i) = p;
+                    i++;
+                }
+            }
         }
-        else
+        cod = LeerYValidarCodigo();
+    }
+    *tam = i;
+    return vP;
+}
+
+int BuscarEnMemoria(PRODUCTOS *p, int tam, int cod)
+{
+    int band = 0, i = 0;
+    while (!band && i < tam)
+    {
+        if ((p + i)->codigo == cod)
         {
             band = 1;
         }
-        fread(p, sizeof(PRECIOS), 1, fp);
+        else
+        {
+            i++;
+        }
     }
     return band;
+}
+int LeerYValidarCodigo()
+{
+    int cod;
+    do
+    {
+        printf("\nIngrese codigo: ");
+        scanf("%d", &cod);
+    } while ((cod < 1000 || cod > 9999) && cod != 0);
+    return cod;
+}
+int BuscarEnArchivo(FILE *fp, PRODUCTOS *p, int cod)
+{
+    int band = 0;
+    rewind(fp);
+    fread(p, sizeof(PRODUCTOS), 1, fp);
+    while (!feof(fp) && !band)
+    {
+        if (p->codigo == cod)
+        {
+            band = 1;
+        }
+        else
+        {
+            fread(p, sizeof(PRODUCTOS), 1, fp);
+        }
+    }
+    return band;
+}
+
+void AgregarEnAux(FILE *fp, FILE *fpMod, PRODUCTOS *vP, int tam)
+{
+    PRODUCTOS p;
+    rewind(fp);
+    fread(&p, sizeof(PRODUCTOS), 1, fp);
+    while (!feof(fp))
+    {
+        if (!BuscarEnMemoria(vP, tam, p.codigo)) // Si no encuentro en faltantes
+        {
+            fwrite(&p, sizeof(PRODUCTOS), 1, fpMod);
+        }
+        else
+        {
+            printf("\nBorrado con exito! %d", p.codigo);
+        }
+        fread(&p, sizeof(PRODUCTOS), 1, fp);
+    }
 }

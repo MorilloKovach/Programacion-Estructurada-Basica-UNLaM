@@ -44,11 +44,13 @@ void LeerArchivo(FILE *fp)
     while(!feof(fp))
     {
         printf("\n%.2f %d",p.precio, p.codigo);
-        fseek(fp, sizeof(PRECIOS)*-1,SEEK_CUR);
+        p.precio = p.precio + (p.precio * inc)/100.0;
+        fseek(fp, (long int)sizeof(PRECIOS)*-1,SEEK_CUR);
         fwrite(&p, sizeof(PRECIOS), 1, fp);
         fflush(fp);
         fread(&p, sizeof(PRECIOS), 1, fp);
     }
+    printf("\n%ld", ftell(fp)/sizeof(PRECIOS));
 }
 
 /*

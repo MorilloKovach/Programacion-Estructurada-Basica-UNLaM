@@ -9,7 +9,7 @@ typedef struct
 } PRECIOS;
 
 float LeerYValidarPrecio();
-int LeerArchivo(int, FILE *, PRECIOS*);
+int BuscarYLeerEnArchivo(int, FILE *, PRECIOS *);
 
 int main()
 {
@@ -23,29 +23,35 @@ int main()
         printf("\nError, no se puede abrir el archivo");
         exit(1);
     }
-    printf("\nIngrese el codigo: ");
-    scanf("%d", &cod);
+    do
+    {
+        printf("\nIngrese el codigo (1000-9999): ");
+        scanf("%d", &cod);
+    } while (!(cod >= 1000 && cod <= 9999));
     while (cod != 0)
     {
-        band = LeerArchivo(cod, fp, &p);
-        if(band)
+        band = BuscarYLeerEnArchivo(cod, fp, &p);
+        if (band)
         {
             precio = LeerYValidarPrecio();
             p.precio = precio;
-            fseek(fp, sizeof(PRECIOS)*-1, SEEK_CUR);
+            fseek(fp, (long int)sizeof(PRECIOS) * -1, SEEK_CUR);
             fwrite(&p, sizeof(PRECIOS), 1, fp);
             printf("\nModificado con exito.");
         }
         else
         {
-            printf("\nNo se pudo modificar el archivo.");
+            printf("\nNo se pudo encontrar el registro.");
         }
-        printf("\nIngrese codigo: ");
-        scanf("%d",&cod);
-        fseek(fp, 0, SEEK_SET);
+        do
+        {
+            printf("\nIngrese el codigo (1000-9999): ");
+            scanf("%d", &cod);
+        } while (!(cod >= 1000 && cod <= 9999));
+        rewind(fp);
     }
     fread(&p, sizeof(PRECIOS), 1, fp);
-    while(!feof(fp))
+    while (!feof(fp))
     {
         printf("\n%d %.2f\n", p.codigo, p.precio);
         fread(&p, sizeof(PRECIOS), 1, fp);
@@ -65,13 +71,13 @@ float LeerYValidarPrecio()
     return n;
 }
 
-int LeerArchivo(int cod, FILE *fp, PRECIOS *p)
+int BuscarYLeerEnArchivo(int cod, FILE *fp, PRECIOS *p)
 {
     int band = 0;
     fread(p, sizeof(PRECIOS), 1, fp);
     while (!feof(fp) && !band)
     {
-        if ((p)->codigo == cod)
+        if (p->codigo == cod)
         {
             band = 1;
         }

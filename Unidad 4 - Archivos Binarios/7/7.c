@@ -14,7 +14,7 @@ cantidad que no pudo venderse, dicho registro debe contener:
 • Código de artículo
 • Cantidad faltante
 Si ya hay un registro previo en dicho archivo de faltantes con el mismo producto debe incrementarse la
-cantidad. 
+cantidad.
 */
 
 #include <stdio.h>
@@ -34,10 +34,10 @@ typedef struct
 } Faltantes;
 
 void ActualizarFaltantes(FILE *, Faltantes *, int, int);
-void BuscarFaltante(FILE *, Faltantes *, int);
+int BuscarFaltante(FILE *, Faltantes *, int);
 void RealizarLectura(FILE *, FILE *);
 int BuscarEnArchivo(FILE *, Productos *, int);
-int LeerYValidarCodigo();
+int LeerYValidarCodigo(int, int, int);
 void AgregarEnFaltantes(FILE *, FILE *, Productos *, Faltantes *, int, int);
 int main()
 {
@@ -52,35 +52,45 @@ int main()
     RealizarLectura(fpLec, fpVta);
     fclose(fpLec);
     fclose(fpVta);
-    return 1;
+    return 0;
 }
 
 void AgregarEnFaltantes(FILE *fpLec, FILE *fpVta, Productos *p, Faltantes *f, int cantQuePaso, int cod)
 {
     p->stock = 0;
-    fseek(fpLec, sizeof(Productos) * -1, SEEK_CUR);
+    fseek(fpLec, (long)sizeof(Productos) * -1, SEEK_CUR);
     fwrite(p, sizeof(Productos), 1, fpLec);
     f->cantidad = cantQuePaso;
     f->cod = cod;
+    fseek(fpVta, (long)0, SEEK_END);
     fwrite(f, sizeof(Faltantes), 1, fpVta);
 }
 
 void ActualizarFaltantes(FILE *fpVta, Faltantes *f, int cod, int cantidadFaltante)
 {
-    rewind(fpVta);
-    BuscarFaltante(fpVta, f, cod);
-    fseek(fpVta, sizeof(Faltantes) * -1, SEEK_CUR);
+    fseek(fpVta, (long)sizeof(Faltantes) * -1, SEEK_CUR);
     f->cantidad += cantidadFaltante;
     fwrite(f, sizeof(Faltantes), 1, fpVta);
+    fseek(fpVta, 0L, SEEK_END);
 }
 
-void BuscarFaltante(FILE *fpVta, Faltantes *f, int cod)
+int BuscarFaltante(FILE *fpVta, Faltantes *f, int cod)
 {
+    int band = 0;
+    rewind(fpVta);
     fread(f, sizeof(Faltantes), 1, fpVta);
-    while (!feof(fpVta) && f->cod != cod)
+    while (!feof(fpVta) && band == 0)
     {
-        fread(f, sizeof(Faltantes), 1, fpVta);
+        if (f->cod == cod)
+        {
+            band = 1;
+        }
+        else
+        {
+            fread(f, sizeof(Faltantes), 1, fpVta);
+        }
     }
+    return band;
 }
 int BuscarEnArchivo(FILE *fp, Productos *p, int cod)
 {
@@ -99,14 +109,14 @@ int BuscarEnArchivo(FILE *fp, Productos *p, int cod)
     }
     return band;
 }
-int LeerYValidarCodigo()
+int LeerYValidarCodigo(int linf, int lsup, int corte)
 {
     int codigo;
     do
     {
         printf("\nIngrese el codigo (entre 1000 a 9999): ");
-        scanf("%d",&codigo);
-    }while((codigo < 1000 || codigo > 9999) && codigo != 0);
+        scanf("%d", &codigo);
+    } while ((codigo < linf || codigo > lsup) && codigo != corte);
     return codigo;
 }
 void RealizarLectura(FILE *fpLec, FILE *fpVta)
@@ -114,7 +124,7 @@ void RealizarLectura(FILE *fpLec, FILE *fpVta)
     Productos p;
     Faltantes f;
     int cod, cantidad, band;
-    cod = LeerYValidarCodigo();
+    cod = LeerYValidarCodigo(1000, 9999, 0);
     while (cod != 0)
     {
         do
@@ -129,12 +139,12 @@ void RealizarLectura(FILE *fpLec, FILE *fpVta)
             if (p.stock >= cantidad)
             {
                 p.stock -= cantidad;
-                fseek(fpLec, sizeof(Productos) * -1, SEEK_CUR);
+                fseek(fpLec, (long)sizeof(Productos) * -1, SEEK_CUR);
                 fwrite(&p, sizeof(Productos), 1, fpLec);
             }
             else
             {
-                if (p.stock > 0)
+                if (!BuscarFaltante(fpVta, &f, cod))
                 {
                     AgregarEnFaltantes(fpLec, fpVta, &p, &f, cantidad - p.stock, cod);
                 }
@@ -148,7 +158,7 @@ void RealizarLectura(FILE *fpLec, FILE *fpVta)
         {
             printf("\nNo existe ese codigo en los ficheros....");
         }
-        cod = LeerYValidarCodigo();
+        cod = LeerYValidarCodigo(1000, 9999, 0);
     }
     printf("\nCerrando la lectura.");
 }

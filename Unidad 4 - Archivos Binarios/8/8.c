@@ -44,7 +44,7 @@ int main()
 {
     FILE *fpVuelos = abrir_archivo("VUELOS.dat", "r+b");
     FILE *fpPasajeros = abrir_archivo("PASAJEROS.dat", "rb");
-    VUELOS *v = NULL, aux;
+    VUELOS *v = NULL;
     int tam = 0;
 
     v = LeerVuelos(fpVuelos, &tam);

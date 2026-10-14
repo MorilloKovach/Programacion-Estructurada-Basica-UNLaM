@@ -41,7 +41,7 @@ int LeerYValidarEntero(int, int);
 int BuscarEnRegistros(FILE *, INSCRIPTOS *, int);
 void LeerTexto(char[], int);
 INTERESADOS CargarInteresado(int);
-void NoEstaEnRegistro(FILE *, FILE *, int , INTERESADOS *, INSCRIPTOS *);
+void NoEstaEnRegistro(FILE *, FILE *, int, INTERESADOS *, INSCRIPTOS *);
 void SetearPago(INSCRIPTOS *, FILE *);
 FILE *Abrir_archivo(char[], char[]);
 void RomperAlFallar(void *);
@@ -93,8 +93,6 @@ void LeerTexto(char str[], int tam)
 {
     int i = 0;
     fflush(stdin);
-    while (getchar() != '\n')
-        ;
     fgets(str, tam, stdin);
     while (i < tam && str[i] != '\0')
     {
@@ -152,8 +150,10 @@ INTERESADOS CargarInteresado(int dni)
 void NoEstaEnRegistro(FILE *fpInscriptos, FILE *fpInteresados, int dni, INTERESADOS *interesado, INSCRIPTOS *inscripto)
 {
     char ApNom[TAM];
+    int totales = ftell(fpInscriptos)/sizeof(INSCRIPTOS);
+    fseek(fpInscriptos, (long)0, SEEK_END);
     int opc;
-    if (ftell(fpInscriptos) / sizeof(INSCRIPTOS) == 60)
+    if (totales == 60)
     {
         printf("\nNo hay mas cupos. Desea ingresar a la lista de espera en futuros cursos? (1 si, 2 no): ");
         opc = LeerYValidarEntero(1, 2);
@@ -169,14 +169,23 @@ void NoEstaEnRegistro(FILE *fpInscriptos, FILE *fpInteresados, int dni, INTERESA
     }
     else
     {
-        printf("\nIngrese su nombre.");
-        LeerTexto(ApNom, TAM);
-        fflush(fpInscriptos);
-        printf("\nAnotado de forma exitosa.");
-        inscripto->DNI = dni;
-        strcpy(inscripto->ApNom, ApNom);
-        inscripto->pagado = 0;
-        fwrite(inscripto, sizeof(INSCRIPTOS), 1, fpInscriptos);
+        printf("\nDesea inscribirse? (1 si, 2 no): ");
+        opc = LeerYValidarEntero(1, 2);
+        if (opc == 1)
+        {
+            printf("\nIngrese su nombre.");
+            LeerTexto(ApNom, TAM);
+            fflush(fpInscriptos);
+            printf("\nAnotado de forma exitosa.");
+            inscripto->DNI = dni;
+            strcpy(inscripto->ApNom, ApNom);
+            inscripto->pagado = 0;
+            fwrite(inscripto, sizeof(INSCRIPTOS), 1, fpInscriptos);
+        }
+        else
+        {
+            printf("\nOk");
+        }
     }
 }
 

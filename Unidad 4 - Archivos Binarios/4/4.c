@@ -1,3 +1,12 @@
+/*
+Realizar un programa que permite actualizar una lista de precios en forma masiva, ingresando un
+porcentaje de incremento. El archivo se llama precios.dat y fue generado utilizando la siguiente
+estructura:
+• Código (entero)
+• Precio (float)
+• Descripción (de hasta 50 caracteres) 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 

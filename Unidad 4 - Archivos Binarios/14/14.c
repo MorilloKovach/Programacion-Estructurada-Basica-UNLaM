@@ -41,6 +41,7 @@ FILE *AbrirArchivo(char[], char[]);
 int LeerYValidarEntero(int, int);
 void MostrarTarifasMes(TARIFAS *, int);
 void InternoQueMenosViajesHizo(FILE *);
+void RomperAlFallo(void *);
 void GenerarArchivo(FILE *, FILE *, TARIFAS *, int);
 
 int main()
@@ -77,242 +78,73 @@ int LeerYValidarEntero(int linf, int lsup)
     int num;
     do
     {
-        printf("\nIngrese el numero (%d-%d): ", linf, lsup);
+        printf("\nIngrese el numero: ");
         scanf("%d", &num);
     } while (num < linf || num > lsup);
     return num;
 }
 
-TARIFAS *CargaTarifas(FILE *fpTarifas, int mes, int *tam)
-{
-    TARIFAS *t = NULL, *auxT = NULL, indT;
-    *tam = 0;
-    rewind(fpTarifas);
-
-    fread(&indT, sizeof(TARIFAS), 1, fpTarifas);
-    while (!feof(fpTarifas))
-    {
-        if (indT.mes == mes)
-        {
-            auxT = (TARIFAS *)realloc(t, ((*tam) + 1) * sizeof(TARIFAS));
-            if (auxT == NULL)
-            {
-                printf("\nError en la ejecucion");
-                exit(1);
-            }
-            t = auxT;
-            *(t + (*tam)) = indT;
-            (*tam)++;
-        }
-        fread(&indT, sizeof(TARIFAS), 1, fpTarifas);
-    }
-    return t;
-}
-
-FILE *AbrirArchivo(char nom[], char mod[])
-{
-    FILE *fp = fopen(nom, mod);
-    if (fp == NULL)
-    {
-        printf("\nError en la ejecucion");
-        exit(1);
-    }
-    return fp;
-}
-
-float CalcularImporte(FILE *fpSube, TARIFAS *t, int tam)
-{
-    rewind(fpSube);
-    float calculo = 0;
-    SUBE s;
-    int i;
-
-    fread(&s, sizeof(SUBE), 1, fpSube);
-    while (!feof(fpSube))
-    {
-        for (i = 0; i < tam; i++)
-        {
-            if (strcmp(s.cod, (t + i)->cod) == 0)
-            {
-                calculo += (t + i)->precio;
-            }
-        }
-        fread(&s, sizeof(SUBE), 1, fpSube);
-    }
-    return calculo;
-}
-
-void MostrarTarifasMes(TARIFAS *t, int tam)
-{
-    int i;
-    for (i = 0; i < tam; i++)
-    {
-        printf("\n %s %.2f", (t + i)->cod, (t + i)->precio);
-    }
-}
-
-void GenerarArchivo(FILE *fpRecaudacion, FILE *fpViajes, TARIFAS *t, int tam)
-{
-    SUBE s, prevS;
-    int i = 0;
-    float costoT = 0;
-    int cant = 0, hayDatos = 0;
-    VIAJES_TARIFAS vt;
-
-    rewind(fpViajes);
-    fread(&s, sizeof(SUBE), 1, fpViajes);
-    prevS = s;
-
-    while (!feof(fpViajes))
-    {
-        hayDatos = 1;
-        if (prevS.interno != s.interno)
-        {
-            vt.cant = cant;
-            vt.costo = costoT;
-            vt.interno = prevS.interno;
-            fwrite(&vt, sizeof(VIAJES_TARIFAS), 1, fpRecaudacion);
-            cant = 0;
-            costoT = 0;
-            prevS = s;
-        }
-        for (i = 0; i < tam; i++)
-        {
-            if (strcmp((t + i)->cod, s.cod) == 0)
-            {
-                cant++;
-                costoT += ((t + i)->precio);
-            }
-        }
-        fread(&s, sizeof(SUBE), 1, fpViajes);
-    }
-
-    if (hayDatos)
-    {
-        vt.cant = cant;
-        vt.costo = costoT;
-        vt.interno = prevS.interno;
-        fwrite(&vt, sizeof(VIAJES_TARIFAS), 1, fpRecaudacion);
-    }
-    rewind(fpViajes);
-}
-
-void InternoQueMenosViajesHizo(FILE *fpViajes)
-{
-    int cant = 0, cantMenor = 0, band = 0, internoMenos = 0, hayDatos = 0;
-    SUBE s, prevS;
-
-    rewind(fpViajes);
-    fread(&s, sizeof(SUBE), 1, fpViajes);
-    prevS = s;
-
-    while (!feof(fpViajes))
-    {
-        hayDatos = 1;
-        if (prevS.interno != s.interno)
-        {
-            if (!band || (cant < cantMenor))
-            {
-                band = 1;
-                cantMenor = cant;
-                internoMenos = prevS.interno;
-            }
-            cant = 0;
-            prevS = s;
-        }
-        cant++;
-        fread(&s, sizeof(SUBE), 1, fpViajes);
-    }
-
-    if (hayDatos && (!band || (cant < cantMenor)))
-    {
-        band = 1;
-        cantMenor = cant;
-        internoMenos = prevS.interno;
-    }
-
-    rewind(fpViajes);
-    if (band)
-    {
-        printf("\nEl interno que menos viajes hizo fue %d", internoMenos);
-    }
-}
-
 int BuscarEnMemoria(VIAJES_TOT *vt, int tam, char cod[])
 {
-    int i = 0, idx = -1;
-    while (i < tam && idx == -1)
+    int i = 0, pos = -1;
+    while (i < tam && pos == -1)
     {
         if (strcmp((vt + i)->cod, cod) == 0)
         {
-            idx = i;
+            pos = i;
         }
         else
         {
             i++;
         }
     }
-    return idx;
+    return pos;
 }
 
-void MostrarViajes(FILE *fpViajes)
+void RomperAlFallo(void *ptr)
 {
-    SUBE s, prevS;
-    VIAJES_TOT *vt = NULL, *aux = NULL;
-    int tam = 0, idx = 0, i;
-
-    rewind(fpViajes);
-    fread(&s, sizeof(SUBE), 1, fpViajes);
-    prevS = s;
-
-    while (!feof(fpViajes))
+    if (ptr == NULL)
     {
-        if (s.interno != prevS.interno)
-        {
-            printf("\nInterno del %d ", prevS.interno);
-            OrdenarViajes(vt, tam);
-            for (i = 0; i < tam; i++)
-            {
-                printf("\nViajes realizados %d con tarifa %s\n", (vt + i)->cant, (vt + i)->cod);
-            }
-            free(vt);
-            vt = NULL;
-            tam = 0;
-            prevS = s;
-        }
-
-        idx = BuscarEnMemoria(vt, tam, s.cod);
-        if (idx == -1)
-        {
-            aux = (VIAJES_TOT *)realloc(vt, (tam + 1) * sizeof(VIAJES_TOT));
-            if (aux == NULL)
-            {
-                printf("\nERROR");
-                exit(1);
-            }
-            vt = aux;
-            (vt + tam)->cant = 1;
-            strcpy((vt + tam)->cod, s.cod);
-            (vt + tam)->interno = s.interno;
-            tam++;
-        }
-        else
-        {
-            (vt + idx)->cant++;
-        }
-
-        fread(&s, sizeof(SUBE), 1, fpViajes);
+        printf("\nError en la ejecucion");
+        exit(1);
     }
+}
 
-    if (tam > 0)
+FILE *AbrirArchivo(char nom[], char mod[])
+{
+    FILE *fp = fopen(nom, mod);
+    RomperAlFallo(fp);
+    return fp;
+}
+
+TARIFAS *CargaTarifas(FILE *fpTarifas, int mes, int *tam)
+{
+    TARIFAS *t, *aux, tarifa;
+    t = NULL;
+    fread(&tarifa, sizeof(TARIFAS), 1, fpTarifas);
+    while (!feof(fpTarifas))
     {
-        printf("\nInterno del %d ", prevS.interno);
-        OrdenarViajes(vt, tam);
-        for (i = 0; i < tam; i++)
+        if (tarifa.mes == mes)
         {
-            printf("\nViajes realizados %d con tarifa %s\n", (vt + i)->cant, (vt + i)->cod);
+            aux = (TARIFAS *)realloc(t, ((*tam) + 1) * sizeof(TARIFAS));
+            RomperAlFallo(aux);
+            t = aux;
+            *(t + (*tam)) = tarifa;
+            (*tam)++;
         }
-        free(vt);
+        fread(&tarifa, sizeof(TARIFAS), 1, fpTarifas);
+    }
+    rewind(fpTarifas);
+    return t;
+}
+
+void MostrarTarifasMes(TARIFAS *t, int tam)
+{
+    int i;
+    printf("\nCODIGO \t PRECIO");
+    for (i = 0; i < tam; i++)
+    {
+        printf("\n%s %.2f", (t + i)->cod, (t + i)->precio);
     }
 }
 
@@ -324,12 +156,154 @@ void OrdenarViajes(VIAJES_TOT *vt, int tam)
     {
         for (j = 0; j < tam - i - 1; j++)
         {
-            if ((vt + j)->cant < (vt + j + 1)->cant)
+            if ((vt + j)->cant < ((vt + j + 1)->cant))
             {
                 aux = *(vt + j);
                 *(vt + j) = *(vt + j + 1);
                 *(vt + j + 1) = aux;
             }
         }
+    }
+}
+
+float CalcularImporte(FILE *fpSube, TARIFAS *t, int tam)
+{
+    float total = 0;
+    SUBE s;
+    int i = 0;
+    fread(&s, sizeof(SUBE), 1, fpSube);
+    while (!feof(fpSube))
+    {
+        for (i = 0; i < tam; i++)
+        {
+            if (strcmp((t + i)->cod, s.cod) == 0)
+            {
+                total += (t + i)->precio;
+            }
+        }
+        fread(&s, sizeof(SUBE), 1, fpSube);
+    }
+    rewind(fpSube);
+    return total;
+}
+
+void InternoQueMenosViajesHizo(FILE *fpViajes)
+{
+    int cant = 0, cantMenor = 0, band = 0, internoMenos = 0, internoAnterior;
+    SUBE s;
+    fread(&s, sizeof(SUBE), 1, fpViajes);
+    internoAnterior = s.interno;
+    while (!feof(fpViajes))
+    {
+        if (s.interno != internoAnterior)
+        {
+            if (!band || (cant < cantMenor))
+            {
+                band = 1;
+                cantMenor = cant;
+                internoMenos = internoAnterior;
+            }
+            cant = 0;
+            internoAnterior = s.interno;
+        }
+        cant++;
+        fread(&s, sizeof(SUBE), 1, fpViajes);
+    }
+    if (!band || (cant < cantMenor))
+    {
+        cantMenor = cant;
+        internoMenos = internoAnterior;
+    }
+    printf("\nEl interno que menos viajes hizo fue %d", internoMenos);
+    rewind(fpViajes);
+}
+
+void GenerarArchivo(FILE *fpRecaudacion, FILE *fpViajes, TARIFAS *t, int tam)
+{
+    int i = 0;
+    float recaudacion = 0;
+    int cant = 0;
+    int interno = 0;
+    SUBE s;
+    VIAJES_TARIFAS vt;
+    fread(&s, sizeof(SUBE), 1, fpViajes);
+    interno = s.interno;
+    while (!feof(fpViajes))
+    {
+        if (interno != s.interno)
+        {
+            vt.cant = cant;
+            vt.costo = recaudacion;
+            vt.interno = interno;
+            cant = 0;
+            recaudacion = 0;
+            interno = s.interno;
+            fwrite(&vt, sizeof(VIAJES_TARIFAS), 1, fpRecaudacion);
+        }
+        for (i = 0; i < tam; i++)
+        {
+            if (strcmp(s.cod, (t + i)->cod) == 0)
+            {
+                cant++;
+                recaudacion += (t + i)->precio;
+            }
+        }
+        fread(&s, sizeof(SUBE), 1, fpViajes);
+    }
+    vt.cant = cant;
+    vt.costo = recaudacion;
+    vt.interno = interno;
+    fwrite(&vt, sizeof(VIAJES_TARIFAS), 1, fpRecaudacion);
+    rewind(fpViajes);
+}
+
+void MostrarViajes(FILE *fpViajes)
+{
+    SUBE s;
+    VIAJES_TOT *vt, *aux;
+    int idx, tam = 0;
+    int interno;
+    fread(&s, sizeof(SUBE), 1, fpViajes);
+    interno = s.interno;
+    vt = NULL;
+    while (!feof(fpViajes))
+    {
+        if (interno != s.interno)
+        {
+            OrdenarViajes(vt, tam);
+            for (idx = 0; idx < tam; idx++)
+            {
+                printf("\n%s %d %d", (vt + idx)->cod, (vt + idx)->cant, (vt + idx)->interno);
+            }
+            free(vt);
+            vt = NULL;
+            tam = 0;
+            interno = s.interno;
+        }
+        idx = BuscarEnMemoria(vt, tam, s.cod);
+        if (idx == -1)
+        {
+            aux = (VIAJES_TOT *)realloc(vt, (tam + 1) * sizeof(VIAJES_TOT));
+            RomperAlFallo(aux);
+            vt = aux;
+            (vt + tam)->cant = 1;
+            strcpy((vt + tam)->cod, s.cod);
+            (vt + tam)->interno = interno;
+            tam++;
+        }
+        else
+        {
+            (vt + idx)->cant++;
+        }
+        fread(&s, sizeof(SUBE), 1, fpViajes);
+    }
+    if (tam > 0)
+    {
+        OrdenarViajes(vt, tam);
+        for (idx = 0; idx < tam; idx++)
+        {
+            printf("\n%s %d %d", (vt + idx)->cod, (vt + idx)->cant, (vt + idx)->interno);
+        }
+        free(vt);
     }
 }

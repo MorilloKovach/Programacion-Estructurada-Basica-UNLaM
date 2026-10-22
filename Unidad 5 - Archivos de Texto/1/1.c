@@ -11,6 +11,7 @@ int main()
     FILE *fp = AbrirArchivo("cadenas.txt", "w");
     char str[300];
     RealizarLectura(fp, str, 300);
+    fclose(fp);
     return 0;
 }
 

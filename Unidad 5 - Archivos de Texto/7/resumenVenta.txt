@@ -1,0 +1,5 @@
+Cantidad de ventas: 6
+Cantidad de productos vendidos: 288
+Sucursal 1000 importe total 23200.00
+Sucursal 2001 importe total 15.00
+Sucursal 2002 importe total 4.00
